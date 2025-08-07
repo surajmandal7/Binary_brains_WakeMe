@@ -849,7 +849,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">✨ Eventify</div>
+            <div class="logo">✨ AlertSync</div>
             <div class="tagline">Transform moments into memories</div>
         </div>
 
@@ -931,12 +931,8 @@
         </div>
 
         <div class="footer">
-            <p>&copy; 2025 Eventify. Crafted with ❤️ for amazing experiences</p>
-            <p>
-                <a href="#about">About</a> |
-                <a href="#contact">Contact</a> |
-                <a href="#privacy">Privacy</a>
-            </p>
+            <p>&copy; 2025 AlertSync. Crafted with ❤️ by Binary Brains</p>
+            
         </div>
     </div>
 
@@ -1301,7 +1297,7 @@
                     .filter(event => event.userId === currentUser?.uid || currentUser?.uid === 'guest');
 
                 const upcomingEvents = allUserEvents.filter(event => event.datetime > now);
-                
+
                 // Check for events that just ended
                 allUserEvents.forEach(event => {
                     const timeSinceEvent = now - event.datetime;
