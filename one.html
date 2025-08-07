@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventify - Dynamic Event Reminder</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #000428 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-light: #ffffff;
+            --text-dark: #2c3e50;
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            --glow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            color: var(--text-light);
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            z-index: -1;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(1deg); }
+            66% { transform: translateY(10px) rotate(-1deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            transform: translateY(-20px);
+            animation: slideDown 0.8s ease-out forwards;
+        }
+
+        @keyframes slideDown {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #f0f8ff, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            animation: shimmer 3s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: -200% center; }
+            50% { background-position: 200% center; }
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .glass-card:hover::before {
+            left: 100%;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Auth Section */
+        .auth-section {
+            padding: 50px;
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            font-weight: 500;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -8px;
+            left: 16px;
+            font-size: 12px;
+            background: var(--primary-gradient);
+            padding: 4px 8px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        input {
+            width: 100%;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        input::placeholder {
+            color: transparent;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Dynamic Buttons */
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+            z-index: -1;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--secondary-gradient);
+            color: white;
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(79, 172, 254, 0.4);
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 20px 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .user-info span {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .auth-section {
+                padding: 30px 20px;
+            }
+        }
+
+        .card {
+            padding: 40px;
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+
+        .card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Countdown Display */
+        .countdown-display {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .countdown-timer {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fff, #f0f8ff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-shadow: none;
+            font-family: 'Inter', monospace;
+            letter-spacing: 4px;
+        }
+
+        .countdown-event {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .countdown-labels {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            font-weight: 400;
+            letter-spacing: 2px;
+        }
+
+        /* Event Items */
+        .events-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .events-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .events-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .events-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .events-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .event-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #fff;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .event-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .event-item:hover::before {
+            left: 100%;
+        }
+
+        .event-item:hover {
+            transform: translateX(10px) scale(1.02);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .event-item.urgent {
+            background: var(--warning-gradient);
+            border-left-color: #fee140;
+            animation: pulse 2s infinite, slideInLeft 0.6s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { 
+                box-shadow: 0 0 0 0 rgba(250, 112, 154, 0.7);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 0 15px rgba(250, 112, 154, 0);
+                transform: scale(1.02);
+            }
+            100% { 
+                box-shadow: 0 0 0 0 rgba(250, 112, 154, 0);
+                transform: scale(1);
+            }
+        }
+
+        .event-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .event-datetime {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .event-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .event-countdown {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: #ff4757;
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            opacity: 0.7;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* Alert System */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 350px;
+            padding: 20px 25px;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: all 0.4s ease;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .alert.show {
+            transform: translateX(0);
+        }
+
+        .alert-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .alert-close:hover {
+            opacity: 1;
+        }
+
+        .alert.success {
+            background: var(--success-gradient);
+        }
+
+        .alert.warning {
+            background: var(--warning-gradient);
+        }
+
+        .alert.error {
+            background: var(--secondary-gradient);
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark-mode-toggle span {
+            font-size: 28px;
+            transition: all 0.3s ease;
+        }
+
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.8;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .footer a:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        /* Particle Animation */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float-particle 15s infinite linear;
+        }
+
+        @keyframes float-particle {
+            0% {
+                transform: translateY(100vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .countdown-timer {
+                font-size: 2.5rem;
+            }
+            
+            .btn {
+                padding: 14px 24px;
+                font-size: 14px;
+            }
+            
+            .card {
+                padding: 25px;
+            }
+            
+            .event-item {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">✨ Eventify</div>
+            <div class="tagline">Transform moments into memories</div>
+        </div>
+
+        <div class="auth-section glass-card" id="authSection">
+            <h2>Welcome to the Future of Events</h2>
+            <div class="auth-form">
+                <div class="input-group">
+                    <input type="email" id="email" placeholder=" " required>
+                    <label for="email">Email Address</label>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                </div>
+                <button class="btn btn-primary" onclick="handleAuth()">
+                    <span>🚀 Launch Experience</span>
+                </button>
+                <button class="btn btn-secondary" onclick="continueWithoutAuth()">
+                    <span>🎯 Quick Start</span>
+                </button>
+            </div>
+            <div class="loading" id="authLoading" style="display: none;">
+                Connecting to the future...
+            </div>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+            <div class="user-info">
+                <span id="userWelcome">🎉 Welcome back!</span>
+                <button class="btn btn-secondary" onclick="signOut()" style="padding: 10px 20px; font-size: 14px;">
+                    👋 Sign Out
+                </button>
+            </div>
+
+            <div class="grid">
+                <div class="glass-card card">
+                    <h2><span>🎨</span>Create New Event</h2>
+                    <form class="event-form" onsubmit="addEvent(event)">
+                        <div class="input-group">
+                            <input type="text" id="eventName" placeholder=" " required>
+                            <label for="eventName">Event Name</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="date" id="eventDate" required>
+                        </div>
+                        <div class="input-group">
+                            <input type="time" id="eventTime" required>
+                        </div>
+                        <div class="input-group">
+                            <textarea id="eventDescription" placeholder="Describe your amazing event..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <span>✨ Create Magic</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="glass-card card">
+                    <h2><span>⚡</span>Next Event Countdown</h2>
+                    <div class="countdown-display">
+                        <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+                        <div class="countdown-event" id="countdownEvent">No upcoming events</div>
+                        <div class="countdown-labels">
+                            Hours : Minutes : Seconds
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card card">
+                <h2><span>🎯</span>Your Upcoming Events</h2>
+                <div class="events-container" id="eventsContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌟</div>
+                        <p>Ready to create your first amazing event?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 Eventify. Crafted with ❤️ for amazing experiences</p>
+            <p>
+                <a href="#about">About</a> |
+                <a href="#contact">Contact</a> |
+                <a href="#privacy">Privacy</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="dark-mode-toggle" onclick="toggleDarkMode()">
+        <span id="toggle-icon">🌙</span>
+    </div>
+
+    <div class="alert" id="alertTemplate" style="display: none;">
+        <button class="alert-close" onclick="closeAlert()">&times;</button>
+        <div id="alertContent"></div>
+    </div>
+
+    <audio id="notificationSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUiAS9+zO/XgjMGHm7A7+CVVA0IVbHn7bNJFQ1Gmtzy4GQjAjJ4ze7bgTAGImK+8OOQPwsOWK/q6aJoGQVDp+XB8oxtIA5Mp+LzxnImCjN+1vDBeSUJJHLH7NJvqOZ8B" type="audio/wav">
+    </audio>
+
+    <script>
+        // Global variables
+        let events = JSON.parse(localStorage.getItem('eventify-events') || '[]');
+        let currentUser = null;
+        let countdownInterval;
+        let notificationChecked = {};
+
+        // Initialize the app
+        window.addEventListener('load', () => {
+            setTodayAsMinDate();
+            startCountdown();
+            displayEvents();
+            checkNotifications();
+            loadDarkMode();
+            createParticles();
+
+            // Check for saved user
+            const savedUser = localStorage.getItem('eventify-user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboard();
+            }
+        });
+
+        // Create floating particles
+        function createParticles() {
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + 'vw';
+                    particle.style.animationDelay = Math.random() * 2 + 's';
+                    particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                    document.body.appendChild(particle);
+
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 20000);
+                }
+            }, 3000);
+        }
+
+        // Set today as minimum date
+        function setTodayAsMinDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('eventDate').setAttribute('min', today);
+        }
+
+        // Authentication functions
+        function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showAlert('Please fill in all fields', 'error');
+                return;
+            }
+
+            if (!isValidEmail(email)) {
+                showAlert('Please enter a valid email address', 'error');
+                return;
+            }
+
+            document.getElementById('authLoading').style.display = 'block';
+
+            // Simulate authentication with enhanced animation
+            setTimeout(() => {
+                currentUser = {
+                    email: email,
+                    uid: 'user_' + Date.now()
+                };
+
+                localStorage.setItem('eventify-user', JSON.stringify(currentUser));
+                document.getElementById('authLoading').style.display = 'none';
+                showDashboard();
+                showAlert('🎉 Welcome to Eventify! Your journey begins now!', 'success');
+            }, 1500);
+        }
+
+        function continueWithoutAuth() {
+            currentUser = {
+                email: 'guest@eventify.com',
+                uid: 'guest'
+            };
+            showDashboard();
+            showAlert('🚀 Welcome aboard! Experience Eventify as our guest.', 'success');
+        }
+
+        function signOut() {
+            currentUser = null;
+            localStorage.removeItem('eventify-user');
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('dashboard').classList.remove('active');
+
+            // Clear form with animation
+            const inputs = document.querySelectorAll('#email, #password');
+            inputs.forEach(input => {
+                input.value = '';
+                input.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    input.style.transform = 'scale(1)';
+                }, 200);
+            });
+
+            showAlert('👋 See you soon! Thanks for using Eventify.', 'success');
+        }
+
+        function showDashboard() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+
+            // Update welcome message with animation
+            const welcomeEl = document.getElementById('userWelcome');
+            welcomeEl.style.opacity = '0';
+            setTimeout(() => {
+                welcomeEl.textContent = `🎉 Welcome, ${currentUser.email}!`;
+                welcomeEl.style.opacity = '1';
+            }, 200);
+        }
+
+        // Validation helper
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Event management functions
+        function addEvent(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('eventName').value.trim();
+            const date = document.getElementById('eventDate').value;
+            const time = document.getElementById('eventTime').value;
+            const description = document.getElementById('eventDescription').value.trim();
+
+            if (!name || !date || !time) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            const eventDateTime = new Date(`${date}T${time}`);
+
+            // Check if the event is in the past
+            if (eventDateTime <= new Date()) {
+                showAlert('⏰ Time travel not supported! Please select a future date and time.', 'warning');
+                return;
+            }
+
+            const newEvent = {
+                id: Date.now(),
+                name,
+                date,
+                time,
+                description,
+                datetime: eventDateTime.getTime(),
+                userId: currentUser.uid
+            };
+
+            events.push(newEvent);
+            saveEvents();
+            displayEvents();
+
+            // Clear form with smooth animation
+            const form = e.target;
+            form.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                form.reset();
+                form.style.transform = 'scale(1)';
+            }, 200);
+
+            showAlert('✨ Event created successfully! Get ready for something amazing!', 'success');
+        }
+
+        function deleteEvent(eventId) {
+            // Add delete animation
+            const eventElement = document.querySelector(`[data-event-id="${eventId}"]`);
+            if (eventElement) {
+                eventElement.style.transform = 'translateX(100px)';
+                eventElement.style.opacity = '0';
+                
+                setTimeout(() => {
+                    events = events.filter(event => event.id !== eventId);
+                    saveEvents();
+                    displayEvents();
+                }, 300);
+            } else {
+                events = events.filter(event => event.id !== eventId);
+                saveEvents();
+                displayEvents();
+            }
+            
+            showAlert('🗑️ Event removed from your timeline', 'warning');
+        }
+
+        function saveEvents() {
+            localStorage.setItem('eventify-events', JSON.stringify(events));
+        }
+
+        function displayEvents() {
+            const container = document.getElementById('eventsContainer');
+            const now = new Date().getTime();
+
+            // Filter and sort events
+            const userEvents = events
+                .filter(event => event.userId === currentUser?.uid || currentUser?.uid === 'guest')
+                .filter(event => event.datetime > now)
+                .sort((a, b) => a.datetime - b.datetime);
+
+            if (userEvents.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌟</div>
+                        <p>Ready to create your first amazing event?</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = userEvents.map(event => {
+                const eventDate = new Date(event.datetime);
+                const timeUntil = event.datetime - now;
+                const isUrgent = timeUntil <= 24 * 60 * 60 * 1000; // Within 24 hours
+
+                const days = Math.floor(timeUntil / (24 * 60 * 60 * 1000));
+                const hours = Math.floor((timeUntil % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const minutes = Math.floor((timeUntil % (60 * 60 * 1000)) / (60 * 1000));
+
+                let timeUntilText = '';
+                if (days > 0) {
+                    timeUntilText = `${days}d ${hours}h ${minutes}m`;
+                } else if (hours > 0) {
+                    timeUntilText = `${hours}h ${minutes}m`;
+                } else {
+                    timeUntilText = `${minutes}m`;
+                }
+
+                const urgentIcon = isUrgent ? '🔥' : '⏰';
+                const eventIcon = getEventIcon(event.name);
+
+                return `
+                    <div class="event-item ${isUrgent ? 'urgent' : ''}" data-event-id="${event.id}">
+                        <button class="delete-btn" onclick="deleteEvent(${event.id})">&times;</button>
+                        <div class="event-title">${eventIcon} ${event.name}</div>
+                        <div class="event-datetime">
+                            📅 ${eventDate.toLocaleDateString()} at ${eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </div>
+                        ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                        <div class="event-countdown">${urgentIcon} ${timeUntilText} remaining</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Get appropriate icon for event
+        function getEventIcon(eventName) {
+            const name = eventName.toLowerCase();
+            if (name.includes('meeting') || name.includes('work')) return '💼';
+            if (name.includes('birthday') || name.includes('party')) return '🎂';
+            if (name.includes('wedding') || name.includes('anniversary')) return '💒';
+            if (name.includes('travel') || name.includes('trip') || name.includes('vacation')) return '✈️';
+            if (name.includes('graduation') || name.includes('school')) return '🎓';
+            if (name.includes('date') || name.includes('dinner')) return '💕';
+            if (name.includes('sport') || name.includes('game')) return '⚽';
+            if (name.includes('concert') || name.includes('music')) return '🎵';
+            return '🎯';
+        }
+
+        // Countdown timer
+        function startCountdown() {
+            countdownInterval = setInterval(updateCountdown, 1000);
+            updateCountdown();
+        }
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const userEvents = events
+                .filter(event => event.userId === currentUser?.uid || currentUser?.uid === 'guest')
+                .filter(event => event.datetime > now)
+                .sort((a, b) => a.datetime - b.datetime);
+
+            const timerEl = document.getElementById('countdownTimer');
+            const eventEl = document.getElementById('countdownEvent');
+
+            if (userEvents.length === 0) {
+                timerEl.textContent = '--:--:--';
+                eventEl.textContent = 'No upcoming events';
+                return;
+            }
+
+            const nextEvent = userEvents[0];
+            const timeLeft = nextEvent.datetime - now;
+
+            if (timeLeft <= 0) {
+                if (!notificationChecked[nextEvent.id + '_ended']) {
+                    notificationChecked[nextEvent.id + '_ended'] = true;
+                    showEventEndedNotification(nextEvent);
+                    setTimeout(() => {
+                        events = events.filter(e => e.id !== nextEvent.id);
+                        saveEvents();
+                        displayEvents();
+                    }, 5000);
+                }
+                return;
+            }
+
+            const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+            const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+            const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+
+            timerEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            eventEl.textContent = `Next: ${nextEvent.name}`;
+
+            // Add pulsing effect when close to event
+            if (timeLeft <= 60000) { // Less than 1 minute
+                timerEl.style.animation = 'pulse 1s infinite';
+            } else {
+                timerEl.style.animation = 'none';
+            }
+
+            if (seconds === 0) {
+                displayEvents();
+            }
+        }
+
+        // Notifications
+        function checkNotifications() {
+            setInterval(() => {
+                const now = new Date().getTime();
+                const allUserEvents = events
+                    .filter(event => event.userId === currentUser?.uid || currentUser?.uid === 'guest');
+
+                const upcomingEvents = allUserEvents.filter(event => event.datetime > now);
+
+                // Check for events that just ended
+                allUserEvents.forEach(event => {
+                    const timeSinceEvent = now - event.datetime;
+                    if (timeSinceEvent >= 0 && timeSinceEvent <= 30000 && !notificationChecked[event.id + '_ended']) {
+                        notificationChecked[event.id + '_ended'] = true;
+                        showEventEndedNotification(event);
+                        setTimeout(() => {
+                            events = events.filter(e => e.id !== event.id);
+                            saveEvents();
+                            displayEvents();
+                        }, 5000);
+                    }
+                });
+
+                // Check for upcoming event reminders
+                upcomingEvents.forEach(event => {
+                    const timeUntil = event.datetime - now;
+                    const minutes = Math.floor(timeUntil / (60 * 1000));
+
+                    if ((minutes === 30 || minutes === 15 || minutes === 10 || minutes === 5) && !notificationChecked[event.id + '_' + minutes]) {
+                        notificationChecked[event.id + '_' + minutes] = true;
+                        showEventNotification(event, minutes);
+                    }
+                });
+            }, 5000);
+        }
+
+        function showEventNotification(event, minutes) {
+            const audio = document.getElementById('notificationSound');
+            audio.play().catch(() => {});
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(`🔔 Event Reminder - ${event.name}`, {
+                    body: `Starting in ${minutes} minutes`,
+                    icon: '📅',
+                    tag: event.id
+                });
+            }
+
+            showAlert(`🔔 "${event.name}" starts in ${minutes} minutes!`, 'warning', 8000);
+        }
+
+        function showEventEndedNotification(event) {
+            const audio = document.getElementById('notificationSound');
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    audio.play().catch(() => {});
+                }, i * 500);
+            }
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(`🎉 Event Started - ${event.name}`, {
+                    body: 'Your event is starting now!',
+                    icon: '🎉',
+                    tag: event.id + '_started',
+                    requireInteraction: true
+                });
+            }
+
+            showAlert(`🎉 "${event.name}" is starting NOW! 🎉`, 'success', 15000);
+
+            // Visual effect
+            document.body.style.animation = 'pulse 0.5s ease-in-out 3';
+            setTimeout(() => {
+                document.body.style.animation = 'none';
+            }, 1500);
+        }
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Alert system
+        function showAlert(message, type = 'error', duration = 5000) {
+            const alertEl = document.getElementById('alertTemplate');
+            const contentEl = document.getElementById('alertContent');
+
+            contentEl.textContent = message;
+            alertEl.className = `alert ${type}`;
+            alertEl.style.display = 'block';
+
+            setTimeout(() => alertEl.classList.add('show'), 100);
+
+            setTimeout(() => {
+                closeAlert();
+            }, duration);
+        }
+
+        function closeAlert() {
+            const alertEl = document.getElementById('alertTemplate');
+            alertEl.classList.remove('show');
+            setTimeout(() => {
+                alertEl.style.display = 'none';
+            }, 400);
+        }
+
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('eventify-dark-mode', isDarkMode);
+            document.getElementById('toggle-icon').textContent = isDarkMode ? '☀️' : '🌙';
+            
+            // Add toggle animation
+            const toggle = document.querySelector('.dark-mode-toggle');
+            toggle.style.transform = 'scale(0.8) rotate(180deg)';
+            setTimeout(() => {
+                toggle.style.transform = 'scale(1) rotate(0deg)';
+            }, 200);
+        }
+
+        function loadDarkMode() {
+            const isDarkMode = localStorage.getItem('eventify-dark-mode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('toggle-icon').textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.getElementById('toggle-icon').textContent = '🌙';
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+        });
+    </script>
